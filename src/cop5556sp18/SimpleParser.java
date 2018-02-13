@@ -149,8 +149,7 @@ public class SimpleParser {
 			break;
 
 		// StatementAssignment ::= LHS ​:=​ Expression
-		// LHS ::= ​IDENTIFIER​ (epsilon | ​PixelSelector) | Color ​(​ ​IDENTIFIER​
-		// PixelSelector ​)
+		// LHS ::= ​IDENTIFIER​ (epsilon | ​PixelSelector) | Color ​(​ ​IDENTIFIER PixelSelector ​)​
 		case IDENTIFIER:
 		case KW_red:
 		case KW_green:
@@ -196,6 +195,7 @@ public class SimpleParser {
 			match(KW_sleep);
 			safeExpression();
 		}
+		break;
 		
 		default:
 			throw new SyntaxException(t, "Illegal token at the start of statement \n Error at " + t.pos);
