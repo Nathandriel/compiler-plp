@@ -701,6 +701,7 @@ public class Scanner {
 		StringBuffer sb = new StringBuffer();
 		sb.append("Tokens:\n");
 		for (int i = 0; i < tokens.size(); i++) {
+			//print tokens
 			//sb.append(tokens.get(i).getText() + "         ");
 			sb.append(tokens.get(i)).append('\n');
 		}

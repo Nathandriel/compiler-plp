@@ -274,7 +274,20 @@ public class ScannerTest {
 		checkNextIsEOF(scanner);
 	}
 	
-	
+	@Test
+	public void test1() throws LexicalException {
+		String input = "/*";
+		thrown.expect(LexicalException.class);  //Tell JUnit to expect a LexicalException
+		try {
+			new Scanner(input).scan();
+		} catch (LexicalException e) {  //Catch the exception
+			show(e);                    //Display it
+			assertEquals(2,e.getPos()); //Check that it occurred in the expected position
+			throw e;                    //Rethrow exception so JUnit will see it
+		}
+		
+		show(input);
+	}
 
 	
 }

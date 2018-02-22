@@ -135,7 +135,25 @@ public class SimpleParserTest {
 		SimpleParser parser = makeParser(input);
 		parser.pixelSelector();
 	}
-
+	
+	@Test
+	public void testFuncApp() throws LexicalException, SyntaxException {
+		String input = "prog{show sin(1); show cos(1); show atan(1); show abs(1);show log(1);}";
+		SimpleParser parser = makeParser(input);
+		thrown.expect(SyntaxException.class);
+		parser.parse();
+	}
+	
+	
+	@Test
+	public void testFuncApp2() throws LexicalException, SyntaxException {
+		String input = "prog{show sin[1,2]; show cos[1,2]; show atan[1,2]; show abs[1,2];show log[1,2];}";
+		SimpleParser parser = makeParser(input);
+		thrown.expect(SyntaxException.class);
+		parser.parse();
+	}
+	
+	
 	/*
 	 * Integration tests
 	 */
@@ -169,4 +187,58 @@ public class SimpleParserTest {
 		parser.parse();
 	}
 
+	/*
+	 * Negative Test cases
+	 */
+	@Test
+	public void testInvalidAndExpression() throws LexicalException, SyntaxException {
+		String input = "prog{if(a & ){};}";
+		SimpleParser parser = makeParser(input);
+		thrown.expect(SyntaxException.class);
+		parser.parse();
+	}
+	
+	
+	@Test
+	public void testInvalidAndExpression2() throws LexicalException, SyntaxException {
+		String input = "prog{if(a && b){};}";
+		SimpleParser parser = makeParser(input);
+		thrown.expect(SyntaxException.class);
+		parser.parse();
+	}
+	
+	@Test
+	public void testInvalidOrExpression() throws LexicalException, SyntaxException {
+		String input = "prog{if(a | b |){};}";
+		SimpleParser parser = makeParser(input);
+		thrown.expect(SyntaxException.class);
+		parser.parse();
+	}
+
+	@Test
+	public void testInvalidOrExpression2() throws LexicalException, SyntaxException {
+		String input = "prog{if(a | b || c){};}";
+		SimpleParser parser = makeParser(input);
+		thrown.expect(SyntaxException.class);
+		parser.parse();
+	}
+
+	@Test
+	public void testInvalidEqualsExpression() throws LexicalException, SyntaxException {
+		String input = "prog{if(a==){};}";
+		SimpleParser parser = makeParser(input);
+		thrown.expect(SyntaxException.class);
+		parser.parse();
+	}
+
+	@Test
+	public void testInvalidNotEqualsExpression() throws LexicalException, SyntaxException {
+		String input = "prog{if(a!=){};}";
+		SimpleParser parser = makeParser(input);
+		thrown.expect(SyntaxException.class);
+		parser.parse();
+	}
+	
+	
+	
 }

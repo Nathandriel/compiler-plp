@@ -442,6 +442,9 @@ public class SimpleParser {
 				functionApplication();
 			} else if (isKind(firstPredefinedname)) {
 				predefinedName();
+			} else {
+				//Handles expressions that don't end properly
+				throw new SyntaxException(t, "Syntax Error. Illegal Expression");
 			}
 		}
 
