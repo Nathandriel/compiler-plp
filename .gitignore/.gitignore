@@ -9,3 +9,6 @@
 *.tar.gz
 *.rar
 
+#Bin
+bin/
+
