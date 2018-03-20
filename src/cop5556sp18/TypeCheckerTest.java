@@ -79,4 +79,58 @@ public class TypeCheckerTest {
 			throw e;
 		}
 	}
+	
+	
+	
+	//Tests
+	@Test
+    public void simpleImage() throws Exception {
+        String input = "X{ image im[1,2]; }";
+        typeCheck(input);
+    }
+    
+    @Test
+    public void simpleImageFail() throws Exception {
+        String input = "X{ image im[1.0, 2]; }";
+        thrown.expect(SemanticException.class);
+        try {
+            typeCheck(input);
+        } catch (SemanticException e) {
+            show(e);
+            throw e;
+        }
+    }
+    
+    @Test
+    public void nestedDec1() throws Exception {
+        String input = "X{ int x; int y; while (x == y) {int x;}; }";
+        typeCheck(input);
+    }
+    
+    @Test
+    public void nestedDec2() throws Exception {
+        String input = "X{ int x; int z; while (x == y) {int x;}; }";
+        thrown.expect(SemanticException.class);
+        try {
+            typeCheck(input);
+        } catch (SemanticException e) {
+            show(e);
+            throw e;
+        }
+    }
+    
+    @Test
+        public void nestedDec3() throws Exception {
+            String input = "X{ int x; int y; while (x == y) { show x;}; }";
+            typeCheck(input);
+    }
+    
+    @Test
+    public void nestedDec4() throws Exception {
+        String input = "X{ int x; int y; while (x == y) { int z;}; show z;}";
+        thrown.expect(SemanticException.class);
+        try { typeCheck(input); } catch (SemanticException e) { show(e); throw e; }
+    }
+
+	
 }
