@@ -14,16 +14,38 @@ package cop5556sp18.AST;
  */
 
 import cop5556sp18.Scanner.Token;
+import cop5556sp18.Types;
+import cop5556sp18.Types.Type;
 
 public class StatementWrite extends Statement {
 
 	public final String sourceName;
 	public final String destName;
+	
+	public Declaration sourceDec;
+	public Declaration destDec;
+	
+	public Declaration getSourceDec() {
+		return sourceDec;
+	}
+
+	public void setSourceDec(Declaration sourceDec) {
+		this.sourceDec = sourceDec;
+	}
+
+	public Declaration getDestDec() {
+		return destDec;
+	}
+
+	public void setDestDec(Declaration destDec) {
+		this.destDec = destDec;
+	}
 
 	public StatementWrite(Token firstToken, Token sourceName, Token destName) {
 		super(firstToken);
 		this.sourceName = sourceName.getText();
 		this.destName = destName.getText();
+		
 	}
 
 	@Override

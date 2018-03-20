@@ -14,11 +14,41 @@ package cop5556sp18.AST;
  */
 
 import cop5556sp18.Scanner.Token;
+import cop5556sp18.Types.Type;
 
 public abstract class Expression extends ASTNode {
+	
+	private Type type;
+	private int val;
+	
+	public Declaration dec;
+
+	public Declaration getDec() {
+		return dec;
+	}
+
+	public void setDec(Declaration dec) {
+		this.dec = dec;
+	}
 
 	public Expression(Token firstToken) {
 		super(firstToken);
+	}
+	
+	public Type getType() {
+		return type;
+	}
+
+	public void setType(Type type) {
+		this.type = type;
+	}
+	
+	public int getVal() {
+		return val;
+	}
+
+	public void setVal(int val) {
+		this.val = val;
 	}
 
 }

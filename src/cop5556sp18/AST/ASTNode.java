@@ -19,6 +19,10 @@ public abstract class ASTNode {
 
 	final public Token firstToken;
 
+	public Token getFirstToken() {
+		return firstToken;
+	}
+
 	public ASTNode(Token firstToken) {
 		super();
 		this.firstToken = firstToken;

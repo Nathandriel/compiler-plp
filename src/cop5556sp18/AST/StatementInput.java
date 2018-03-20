@@ -14,11 +14,22 @@ package cop5556sp18.AST;
  */
 
 import cop5556sp18.Scanner.Token;
+import cop5556sp18.Types;
+import cop5556sp18.Types.Type;
 
 public class StatementInput extends Statement {
 
 	public final String destName;
 	public final Expression e;
+	public Declaration dec;
+
+	public Declaration getDec() {
+		return dec;
+	}
+
+	public void setDec(Declaration dec) {
+		this.dec = dec;
+	}
 
 	public StatementInput(Token firstToken, Token destName, Expression e) {
 		super(firstToken);
