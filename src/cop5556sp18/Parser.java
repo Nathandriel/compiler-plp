@@ -202,8 +202,9 @@ public class Parser {
 		case KW_write: {
 			match(KW_write);
 			Token source = match(IDENTIFIER);
-			Token dest = match(KW_to);
-			match(IDENTIFIER);
+			match(KW_to);
+			Token dest = match(IDENTIFIER);
+			
 			
 			return new StatementWrite(firstToken, source, dest);
 		}
