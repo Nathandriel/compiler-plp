@@ -618,6 +618,7 @@ public class Scanner {
 				}	
 				break;
 				case IN_BLOCK_COMMENT: {
+					if (ch == EOFChar) throw new LexicalException("Comment is not closed", pos);
 					try {
 						while (ch != EOFChar) {
 							if (chars[pos] == '*' && chars[pos+1] == '/') {

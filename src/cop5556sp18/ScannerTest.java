@@ -275,7 +275,7 @@ public class ScannerTest {
 	}
 	
 	@Test
-	public void test1() throws LexicalException {
+	public void testComment() throws LexicalException {
 		String input = "/*";
 		thrown.expect(LexicalException.class);  //Tell JUnit to expect a LexicalException
 		try {
