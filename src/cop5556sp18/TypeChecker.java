@@ -129,6 +129,7 @@ public class TypeChecker implements ASTVisitor {
 	@Override
 	public Object visitStatementInput(StatementInput statementInput, Object arg) throws Exception {
 		statementInput.setDec(symbolTable.lookup(statementInput.destName));
+
 		Expression exp = statementInput.e;
 		
 		if (statementInput.getDec() != null && exp.getType() == Type.INTEGER ) {
@@ -211,8 +212,8 @@ public class TypeChecker implements ASTVisitor {
 	public Object visitLHSSample(LHSSample lhsSample, Object arg) throws Exception {
 		lhsSample.setDec(symbolTable.lookup(lhsSample.name));
 		
-		if (lhsSample.getDec() != null) {
-			lhsSample.setType(Types.getType(lhsSample.getDec().type));
+		if (lhsSample.getDec() != null && lhsSample.getDec().type == Kind.KW_image) {
+			lhsSample.setType(Type.INTEGER);
 			return lhsSample;
 		}
 		throw new SemanticException(lhsSample.firstToken, "Declaration not found in scope in LHSSample");
@@ -222,7 +223,7 @@ public class TypeChecker implements ASTVisitor {
 	public Object visitLHSPixel(LHSPixel lhsPixel, Object arg) throws Exception {
 		lhsPixel.setDec(symbolTable.lookup(lhsPixel.name));
 		
-		if (lhsPixel.getDec() != null) {
+		if (lhsPixel.getDec() != null && lhsPixel.getDec().type == Kind.KW_image) {
 			lhsPixel.setType(Types.getType(lhsPixel.getDec().type));
 			return lhsPixel;
 		}
@@ -419,6 +420,7 @@ public class TypeChecker implements ASTVisitor {
 		
 		if (exp.getType() == Type.INTEGER) {
 			switch(functionName) {
+				case KW_int:
 				case KW_abs:
 				case KW_red:
 				case KW_green:
@@ -427,11 +429,14 @@ public class TypeChecker implements ASTVisitor {
 					expressionFunctionAppWithExpressionArg.setType(Type.INTEGER);
 					return expressionFunctionAppWithExpressionArg;
 				}
-				default:
-					throw new SemanticException(expressionFunctionAppWithExpressionArg.firstToken, "Invalid function name");
+				case KW_float:{
+					expressionFunctionAppWithExpressionArg.setType(Type.FLOAT);
+					return expressionFunctionAppWithExpressionArg;
+				}
 			}
 		} else if (exp.getType() == Type.FLOAT) {
 			switch(functionName) {
+				case KW_float:
 				case KW_abs:
 				case KW_sin:
 				case KW_cos:
@@ -440,8 +445,10 @@ public class TypeChecker implements ASTVisitor {
 					expressionFunctionAppWithExpressionArg.setType(Type.FLOAT);
 					return expressionFunctionAppWithExpressionArg;
 				}
-				default:
-					throw new SemanticException(expressionFunctionAppWithExpressionArg.firstToken, "Invalid function name");
+				case KW_int: {
+					expressionFunctionAppWithExpressionArg.setType(Type.INTEGER);
+					return expressionFunctionAppWithExpressionArg;
+				}
 			}
 		} else if (exp.getType() == Type.IMAGE) {
 			switch(functionName) {
@@ -454,23 +461,11 @@ public class TypeChecker implements ASTVisitor {
 					throw new SemanticException(expressionFunctionAppWithExpressionArg.firstToken, "Invalid function name");
 				
 			}
-		} else if ((exp.getType() == Type.INTEGER) && (Types.getType(functionName) == Type.FLOAT) ) {
-			expressionFunctionAppWithExpressionArg.setType(Type.FLOAT);
-			return expressionFunctionAppWithExpressionArg;
-		}  else if ((exp.getType() == Type.FLOAT) && (Types.getType(functionName) == Type.FLOAT) ) {
-			expressionFunctionAppWithExpressionArg.setType(Type.FLOAT);
-			return expressionFunctionAppWithExpressionArg;
-		}  else if ((exp.getType() == Type.FLOAT) && (Types.getType(functionName) == Type.INTEGER) ) {
-			expressionFunctionAppWithExpressionArg.setType(Type.INTEGER);
-			return expressionFunctionAppWithExpressionArg;
-		}  else if ((exp.getType() == Type.INTEGER) && (Types.getType(functionName) == Type.INTEGER) ) {
-			expressionFunctionAppWithExpressionArg.setType(Type.INTEGER);
-			return expressionFunctionAppWithExpressionArg;
 		} else {
 			throw new SemanticException(expressionFunctionAppWithExpressionArg.firstToken, "Invalid combination. Valid type can't be inferred");
 		}
 		
-		
+		return null;
 	}
 
 	@Override
@@ -488,14 +483,16 @@ public class TypeChecker implements ASTVisitor {
 			if (e0.getType() == Type.FLOAT && e1.getType() == Type.FLOAT) {
 				expressionFunctionAppWithPixel.setType(Type.INTEGER);
 				return expressionFunctionAppWithPixel;
+			} else {
+				throw new SemanticException(expressionFunctionAppWithPixel.firstToken, "Type mismatch in ExpressionFunctionAppWithPixel (cartesian)" );
 			}
 		} else if (functionName == Kind.KW_polar_a || functionName == Kind.KW_polar_r) {
 			if (e0.getType() == Type.INTEGER && e1.getType() == Type.INTEGER) {
 				expressionFunctionAppWithPixel.setType(Type.FLOAT);
 				return expressionFunctionAppWithPixel;
+			} else {
+				throw new SemanticException(expressionFunctionAppWithPixel.firstToken, "Type mismatch in ExpressionFunctionAppWithPixel (polar)" );
 			}
-		} else {
-			throw new SemanticException(expressionFunctionAppWithPixel.firstToken, "Type mismatch in ExpressionFunctionAppWithPixel" );
 		}
 		return null;
 	}
@@ -525,7 +522,7 @@ public class TypeChecker implements ASTVisitor {
 	public Object visitExpressionPixel(ExpressionPixel expressionPixel, Object arg) throws Exception {
 		expressionPixel.setDec(symbolTable.lookup(expressionPixel.name));
 		
-		if (expressionPixel.getDec() != null && Types.getType(expressionPixel.getDec().type) ==Type.INTEGER) {
+		if (expressionPixel.getDec() != null && Types.getType(expressionPixel.getDec().type) ==Type.IMAGE) {
 			expressionPixel.setType(Type.INTEGER);
 			return expressionPixel;
 		}

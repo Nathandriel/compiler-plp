@@ -96,7 +96,7 @@ public class Parser {
 			KW_polar_r, KW_int, KW_float, KW_width, KW_height, KW_red, KW_green, KW_blue, KW_alpha, KW_Z,
 			KW_default_width, KW_default_height };
 
-	Kind[] firstFunctionName = { KW_sin, KW_cos, KW_atan, KW_log, KW_cart_x, KW_cart_y, KW_polar_a, KW_polar_r, KW_int,
+	Kind[] firstFunctionName = { KW_sin, KW_cos, KW_atan, KW_abs, KW_log, KW_cart_x, KW_cart_y, KW_polar_a, KW_polar_r, KW_int,
 			KW_float, KW_width, KW_height, KW_red, KW_green, KW_blue, KW_alpha };
 
 	Kind[] firstPredefinedname = { KW_Z, KW_default_width, KW_default_height };
@@ -110,7 +110,7 @@ public class Parser {
 		Token firstToken = t;
 		match(LBRACE);
 		List<ASTNode> decsOrStatements = new ArrayList<ASTNode>();
-		while (isKind(firstDec) | isKind(firstStatement)) {
+		while (isKind(firstDec) || isKind(firstStatement)) {
 			if (isKind(firstDec)) {
 				Declaration dec = declaration();
 				decsOrStatements.add((ASTNode) dec);
