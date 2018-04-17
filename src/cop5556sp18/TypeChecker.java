@@ -131,6 +131,7 @@ public class TypeChecker implements ASTVisitor {
 		statementInput.setDec(symbolTable.lookup(statementInput.destName));
 
 		Expression exp = statementInput.e;
+		exp = (Expression) exp.visit(this, null);
 		
 		if (statementInput.getDec() != null && exp.getType() == Type.INTEGER ) {
 			return statementInput;
@@ -146,7 +147,7 @@ public class TypeChecker implements ASTVisitor {
 		exp = (Expression) exp.visit(this, null);
 		
 		if (exp.getType() != lhs.getType()) {
-			throw new SemanticException(exp.firstToken, "Type mismatch: Expression of type " + exp.getType() + " cannot be assigned to ");
+			throw new SemanticException(exp.firstToken, "Type mismatch: Expression of type " + exp.getType() + " cannot be assigned to " + lhs.getFirstToken().getText());
 		}
 		return statementAssign;
 	}
@@ -224,7 +225,7 @@ public class TypeChecker implements ASTVisitor {
 		lhsPixel.setDec(symbolTable.lookup(lhsPixel.name));
 		
 		if (lhsPixel.getDec() != null && lhsPixel.getDec().type == Kind.KW_image) {
-			lhsPixel.setType(Types.getType(lhsPixel.getDec().type));
+			lhsPixel.setType(Type.INTEGER);
 			return lhsPixel;
 		}
 		throw new SemanticException(lhsPixel.firstToken, "Declaration not found in scope in LHSPixel");
