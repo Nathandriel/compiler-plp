@@ -127,12 +127,10 @@ public class CodeGenerator implements ASTVisitor, Opcodes {
 				declaration.width.visit(this, arg);
 				declaration.height.visit(this, arg);
 			} else {
-				// load values on to stack
 				mv.visitLdcInsn(defaultWidth);
 				mv.visitLdcInsn(defaultHeight);
 			}
-			// generate code to instantiate an image. visit method and put produced output
-			// on the top of stack
+			// Instantiate an image. visit method and put produced output on the top of stack
 			mv.visitMethodInsn(INVOKESTATIC, RuntimeImageSupport.className, "makeImage",
 					RuntimeImageSupport.makeImageSig, false);
 			// pop the value from top of stack and store in the current slot of ASM array
@@ -273,8 +271,6 @@ public class CodeGenerator implements ASTVisitor, Opcodes {
 				mv.visitJumpInsn(FCMPG, setTrue);
 				mv.visitJumpInsn(GOTO, endLabel);
 				mv.visitLabel(setTrue);
-				// remove top of the stack ?
-				// mv.visitInsn(POP);
 				mv.visitInsn(ICONST_1);
 				mv.visitLabel(endLabel);
 			} else if (op == Kind.OP_NEQ) {
@@ -750,7 +746,6 @@ public class CodeGenerator implements ASTVisitor, Opcodes {
 		return null;
 	}
 
-	//TODO visit ?
 	@Override
 	public Object visitPixelSelector(PixelSelector pixelSelector, Object arg) throws Exception {
 
