@@ -1,24 +1,9 @@
-/**
- * 
- * Class contains methods to manipulate and display images. It is part of the runtime support
- * for our language.
- * 
- * This code is used in the class project in COP5556 Programming Language Principles 
- * at the University of Florida, Spring 2018.
- * 
- * This software is solely for the educational benefit of students 
- * enrolled in the course during the Spring 2018 semester.  
- * 
- * This software, and any software derived from it,  may not be shared with others or posted to public web sites,
- * either during the course or afterwards.
- * 
- *  @Beverly A. Sanders, 2018
- */
 
 package cop5556sp18;
 
 import static javax.swing.JFrame.EXIT_ON_CLOSE;
 
+import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
@@ -50,6 +35,7 @@ public class RuntimeImageSupport {
 		File f = new File(filename);
 		BufferedImage bi;
 		try {
+			System.out.println("reading image from file " + filename);
 			bi = ImageIO.read(f);
 		} catch (IOException e) {
 			throw new RuntimeException(e.getMessage() + " " + filename, e);
@@ -110,9 +96,13 @@ public class RuntimeImageSupport {
 			image = readFromFile(source);
 		}
 		if (X != null) {
-			return resize(image, X, Y);
+			image = resize(image, X, Y);
 		}
-		return image;
+		BufferedImage newImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = newImage.createGraphics();
+		g.drawImage(image, 0, 0, image.getWidth(), image.getHeight(), null);
+		g.dispose();
+		return newImage;
 	}
 	//
 	//
@@ -135,7 +125,7 @@ public class RuntimeImageSupport {
 		try {
 			System.out.println("writing image to file " + filename
 					+ "(in File.toString) " + f);
-			ImageIO.write(image, "jpeg", f);
+			ImageIO.write(image, "png", f);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

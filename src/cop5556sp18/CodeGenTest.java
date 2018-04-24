@@ -194,5 +194,60 @@ public class CodeGenTest {
 		assertEquals("entering main;3;leaving main;",RuntimeLog.globalLog.toString());
 	}
 	
+	@Test
+	public void createNonDefaultSizeImage() throws Exception {
+		String input = "prog{image y[512,256];\n  show y;} ";
+		byte[] bytecode = genCode(input);
+		
+	}
+	
+	@Test
+	public void testExpressionPredefinedName() throws Exception {
+		String input = "prog{show Z; show default_width; show default_height;}";
+		byte[] bytecode = genCode(input);
+		
+	}
+	
+	@Test
+	public void readFromCommandLine() throws Exception {
+		String input = "prog{int x; input x from @ 0 ; show x;\nfloat y; input y from @ 1; show y;\nboolean z; input z from @ 2; show z;\ninput z from @ 3; show z;}";
+		byte[] bytecode = genCode(input);
+		String[] commandLineArgs = {};
+		runCode(input, bytecode, commandLineArgs);
+		show("Log:\n"+RuntimeLog.globalLog);
+	}
+	
+	@Test
+	public void readImageFromCommandLine() throws Exception {
+		String input = "prog{image y; input y from @ 0 ; show y;} ";
+		byte[] bytecode = genCode(input);
+		
+	}
+	
+	@Test
+	public void testBinary1() throws Exception {
+		String input = "prog{show 9 + 4;show 9 - 4;show 9 * 4;show 9 / 4;show 9 ** 4;show 9 % 4;show 9 & 4;show 9 | 4;}";
+		byte[] bytecode = genCode(input);
+	}
+	
+	@Test
+	public void testBinary2() throws Exception {
+		String input = "prog{show 9.1 + 4.5;show 9.1 - 4.5;show 9.1 * 4.5;show 8.82 / 4.2;show 9.1 ** 4.1;}";
+		byte[] bytecode = genCode(input);
+	}
+	
+
+	@Test
+	public void testBinary4() throws Exception {
+		String input =  "prog{show 9.1 + 4;show 9.1 - 4;show 9.1 * 4;show 8.2 / 4;show 9.1 ** 4;}";
+		byte[] bytecode = genCode(input);
+	}
+	 
+	@Test
+	public void writeImageToFile() throws Exception {
+		String input =  "writeImageToFile{image y;\n filename f;\n input y from @ 0 ; input f from @1; \n show y; write y to f;} ";
+		byte[] bytecode = genCode(input);
+	}
+	
 
 }
