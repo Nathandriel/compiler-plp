@@ -18,6 +18,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+
 import cop5556sp18.Types.Type;
 import cop5556sp18.AST.ASTNode;
 import cop5556sp18.AST.ASTVisitor;
@@ -460,13 +461,19 @@ public class CodeGenerator implements ASTVisitor, Opcodes {
 		Label falseLabel = new Label();
 		Label trueLabel = new Label();
 		Label endLabel = new Label();
-
+		
+		Label guardStart = new Label();
+		Label guardEnd = new Label();
+		
+		mv.visitLabel(guardStart);
 		expressionConditional.guard.visit(this, arg);
+		mv.visitLabel(guardEnd);
 
 		mv.visitJumpInsn(IFEQ, falseLabel);
 		mv.visitLabel(trueLabel);
 		expressionConditional.trueExpression.visit(this, arg);
 		mv.visitJumpInsn(GOTO, endLabel);
+		
 		mv.visitLabel(falseLabel);
 		expressionConditional.falseExpression.visit(this, arg);
 		mv.visitLabel(endLabel);
@@ -487,7 +494,8 @@ public class CodeGenerator implements ASTVisitor, Opcodes {
 			throws Exception {
 
 		Kind function = expressionFunctionAppWithExpressionArg.function;
-		expressionFunctionAppWithExpressionArg.e.visit(this, arg);
+		Expression exp = expressionFunctionAppWithExpressionArg.e;
+		exp.visit(this, arg);
 
 		if (function == Kind.KW_sin) {
 			mv.visitInsn(F2D);
@@ -511,24 +519,24 @@ public class CodeGenerator implements ASTVisitor, Opcodes {
 
 		} else if (function == Kind.KW_abs) {
 
-			if (expressionFunctionAppWithExpressionArg.e.getType() == Type.INTEGER) {
+			if (exp.getType() == Type.INTEGER) {
 				mv.visitInsn(I2D);
 				mv.visitMethodInsn(INVOKESTATIC, "java/lang/Math", "abs", "(D)D", false);
 				mv.visitInsn(D2I);
 
-			} else if (expressionFunctionAppWithExpressionArg.e.getType() == Type.FLOAT) {
+			} else if (exp.getType() == Type.FLOAT) {
 				mv.visitInsn(F2D);
 				mv.visitMethodInsn(INVOKESTATIC, "java/lang/Math", "abs", "(D)D", false);
 				mv.visitInsn(D2F);
 			}
 
 		} else if (function == Kind.KW_int) {
-			if (expressionFunctionAppWithExpressionArg.e.getType() == Type.FLOAT) {
+			if (exp.getType() == Type.FLOAT) {
 				mv.visitInsn(F2I);
 			}
 
 		} else if (function == Kind.KW_float) {
-			if (expressionFunctionAppWithExpressionArg.e.getType() == Type.INTEGER) {
+			if (exp.getType() == Type.INTEGER) {
 				mv.visitInsn(I2F);
 			}
 
@@ -556,40 +564,35 @@ public class CodeGenerator implements ASTVisitor, Opcodes {
 		return null;
 	}
 
+	//TODO
 	@Override
 	public Object visitExpressionFunctionAppWithPixel(ExpressionFunctionAppWithPixel expressionFunctionAppWithPixel,
 			Object arg) throws Exception {
 
 		Kind name = expressionFunctionAppWithPixel.name;
+		
+		expressionFunctionAppWithPixel.e0.visit(this, arg);
+		expressionFunctionAppWithPixel.e1.visit(this, arg);
 
 		if (name == Kind.KW_cart_x) {
-			expressionFunctionAppWithPixel.e0.visit(this, arg);
 			mv.visitInsn(F2D);
-			expressionFunctionAppWithPixel.e1.visit(this, arg);
 			mv.visitInsn(F2D);
 			mv.visitMethodInsn(INVOKESTATIC, "java/lang/Math", "cos", "(D)D", false);
 			mv.visitInsn(DMUL);
 			mv.visitInsn(D2I);
 		} else if (name == Kind.KW_cart_y) {
-			expressionFunctionAppWithPixel.e0.visit(this, arg);
 			mv.visitInsn(F2D);
-			expressionFunctionAppWithPixel.e1.visit(this, arg);
 			mv.visitInsn(F2D);
 			mv.visitMethodInsn(INVOKESTATIC, "java/lang/Math", "sin", "(D)D", false);
 			mv.visitInsn(DMUL);
 			mv.visitInsn(D2I);
 		} else if (name == Kind.KW_polar_a) {
-			expressionFunctionAppWithPixel.e1.visit(this, arg);
 			mv.visitInsn(I2D);
-			expressionFunctionAppWithPixel.e0.visit(this, arg);
 			mv.visitInsn(I2D);
-			// mv.visitInsn(SWAP);
 			mv.visitMethodInsn(INVOKESTATIC, "java/lang/Math", "atan2", "(DD)D", false);
 			mv.visitInsn(D2F);
 		} else if (name == Kind.KW_polar_r) {
-			expressionFunctionAppWithPixel.e0.visit(this, arg);
 			mv.visitInsn(I2D);
-			expressionFunctionAppWithPixel.e1.visit(this, arg);
 			mv.visitInsn(I2D);
 			mv.visitMethodInsn(INVOKESTATIC, "java/lang/Math", "hypot", "(DD)D", false);
 			mv.visitInsn(D2F);
@@ -601,12 +604,13 @@ public class CodeGenerator implements ASTVisitor, Opcodes {
 	@Override
 	public Object visitExpressionIdent(ExpressionIdent expressionIdent, Object arg) throws Exception {
 
-		if (Types.getType(expressionIdent.dec.type) == Type.INTEGER
-				|| Types.getType(expressionIdent.dec.type) == Type.BOOLEAN) {
+		Type type = expressionIdent.getType();
+		
+		if (type == Type.INTEGER || type == Type.BOOLEAN) {
 			mv.visitVarInsn(ILOAD, expressionIdent.dec.slot);
-		} else if (Types.getType(expressionIdent.dec.type) == Type.FLOAT) {
+		} else if (type == Type.FLOAT) {
 			mv.visitVarInsn(FLOAD, expressionIdent.dec.slot);
-		} else {
+		} else if (type == Type.IMAGE || type == Type.FILE) {
 			mv.visitVarInsn(ALOAD, expressionIdent.dec.slot);
 		}
 
@@ -637,14 +641,10 @@ public class CodeGenerator implements ASTVisitor, Opcodes {
 			throws Exception {
 
 		expressionPixelConstructor.alpha.visit(this, arg);
-		mv.visitMethodInsn(INVOKESTATIC, RuntimePixelOps.className, "getAlpha", RuntimePixelOps.getAlphaSig, false);
 		expressionPixelConstructor.red.visit(this, arg);
-		mv.visitMethodInsn(INVOKESTATIC, RuntimePixelOps.className, "getRed", RuntimePixelOps.getRedSig, false);
 		expressionPixelConstructor.green.visit(this, arg);
-		mv.visitMethodInsn(INVOKESTATIC, RuntimePixelOps.className, "getGreen", RuntimePixelOps.getGreenSig, false);
 		expressionPixelConstructor.blue.visit(this, arg);
-		mv.visitMethodInsn(INVOKESTATIC, RuntimePixelOps.className, "getBlue", RuntimePixelOps.getBlueSig, false);
-
+		
 		mv.visitMethodInsn(INVOKESTATIC, RuntimePixelOps.className, "makePixel", RuntimePixelOps.makePixelSig, false);
 
 		return null;
@@ -666,26 +666,28 @@ public class CodeGenerator implements ASTVisitor, Opcodes {
 		return null;
 	}
 
-	// TODO Missing cases ?
 	@Override
 	public Object visitExpressionUnary(ExpressionUnary expressionUnary, Object arg) throws Exception {
 
-		expressionUnary.expression.visit(this, arg);
+		Expression expression = expressionUnary.expression;
+		Kind op = expressionUnary.op;
+		
+		expression.visit(this, arg);
+		
+		if (op == Kind.OP_MINUS) {
 
-		if (expressionUnary.op == Kind.OP_MINUS) {
-
-			if (expressionUnary.expression.getType() == Type.INTEGER) {
+			if (expression.getType() == Type.INTEGER) {
 				mv.visitInsn(INEG);
-			} else if (expressionUnary.expression.getType() == Type.FLOAT) {
+			} else if (expression.getType() == Type.FLOAT) {
 				mv.visitInsn(FNEG);
 			}
-		} else if (expressionUnary.op == Kind.OP_EXCLAMATION) {
+		} else if (op == Kind.OP_EXCLAMATION) {
 
-			if (expressionUnary.expression.getType() == Type.INTEGER) {
+			if (expression.getType() == Type.INTEGER) {
 				mv.visitLdcInsn(-1);
 				mv.visitInsn(IXOR);
-			} else if (expressionUnary.expression.getType() == Type.BOOLEAN) {
-				mv.visitLdcInsn(true);
+			} else if (expression.getType() == Type.BOOLEAN) {
+				mv.visitLdcInsn(ICONST_1);
 				mv.visitInsn(IXOR);
 			}
 		}
@@ -693,19 +695,20 @@ public class CodeGenerator implements ASTVisitor, Opcodes {
 		return null;
 	}
 
-	// TODO test
 	@Override
 	public Object visitLHSIdent(LHSIdent lhsIdent, Object arg) throws Exception {
+		
+		Type type = lhsIdent.getType();
 
-		if (Types.getType(lhsIdent.getDec().type) == Type.INTEGER) {
+		if (type == Type.INTEGER) {
 			mv.visitVarInsn(ISTORE, lhsIdent.getDec().slot);
-		} else if (Types.getType(lhsIdent.getDec().type) == Type.FLOAT) {
+		} else if (type == Type.FLOAT) {
 			mv.visitVarInsn(FSTORE, lhsIdent.getDec().slot);
-		} else if (Types.getType(lhsIdent.getDec().type) == Type.BOOLEAN) {
+		} else if (type == Type.BOOLEAN) {
 			mv.visitVarInsn(ISTORE, lhsIdent.getDec().slot);
-		} else if (Types.getType(lhsIdent.getDec().type) == Type.FILE) {
+		} else if (type == Type.FILE) {
 			mv.visitVarInsn(ASTORE, lhsIdent.getDec().slot);
-		} else if (Types.getType(lhsIdent.getDec().type) == Type.IMAGE) {
+		} else if (type == Type.IMAGE) {
 			mv.visitMethodInsn(INVOKESTATIC, RuntimeImageSupport.className, "deepCopy", RuntimeImageSupport.deepCopySig,
 					false);
 			mv.visitVarInsn(ASTORE, lhsIdent.getDec().slot);
@@ -731,15 +734,15 @@ public class CodeGenerator implements ASTVisitor, Opcodes {
 		mv.visitVarInsn(ALOAD, lhsSample.getDec().slot);
 		lhsSample.pixelSelector.visit(this, arg);
 
-		if (col == Kind.KW_red) {
+		if (col == Kind.KW_alpha) {
+			mv.visitLdcInsn(RuntimePixelOps.ALPHA);
+		} else if (col == Kind.KW_red) {
 			mv.visitLdcInsn(RuntimePixelOps.RED);
 		} else if (col == Kind.KW_green) {
 			mv.visitLdcInsn(RuntimePixelOps.GREEN);
 		} else if (col == Kind.KW_blue) {
 			mv.visitLdcInsn(RuntimePixelOps.BLUE);
-		} else if (col == Kind.KW_alpha) {
-			mv.visitLdcInsn(RuntimePixelOps.ALPHA);
-		}
+		}  
 
 		mv.visitMethodInsn(INVOKESTATIC, RuntimeImageSupport.className, "updatePixelColor",
 				RuntimeImageSupport.updatePixelColorSig, false);
@@ -747,6 +750,7 @@ public class CodeGenerator implements ASTVisitor, Opcodes {
 		return null;
 	}
 
+	//TODO visit ?
 	@Override
 	public Object visitPixelSelector(PixelSelector pixelSelector, Object arg) throws Exception {
 
@@ -837,14 +841,12 @@ public class CodeGenerator implements ASTVisitor, Opcodes {
 	@Override
 	public Object visitStatementIf(StatementIf statementIf, Object arg) throws Exception {
 
-		Label falseLabel = new Label();
-		Label trueLabel = new Label();
+		Label conditionalLabel = new Label();
 
 		statementIf.guard.visit(this, arg);
-		mv.visitJumpInsn(IFEQ, falseLabel);
-		mv.visitLabel(trueLabel);
+		mv.visitJumpInsn(IFEQ, conditionalLabel);
 		statementIf.b.visit(this, arg);
-		mv.visitLabel(falseLabel);
+		mv.visitLabel(conditionalLabel);
 
 		return null;
 	}
@@ -856,33 +858,30 @@ public class CodeGenerator implements ASTVisitor, Opcodes {
 		statementInput.e.visit(this, arg);
 		mv.visitInsn(AALOAD);
 
-		if (Types.getType(statementInput.getDec().type) == Type.INTEGER) {
+		Type type = Types.getType(statementInput.getDec().type);
+		
+		if (type == Type.INTEGER) {
 			mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "parseInt", "(Ljava/lang/String;)I", false);
 			mv.visitVarInsn(ISTORE, statementInput.getDec().slot);
 
-		} else if (Types.getType(statementInput.getDec().type) == Type.FLOAT) {
+		} else if (type == Type.FLOAT) {
 			mv.visitMethodInsn(INVOKESTATIC, "java/lang/Float", "parseFloat", "(Ljava/lang/String;)F", false);
 			mv.visitVarInsn(FSTORE, statementInput.getDec().slot);
 
-		} else if (Types.getType(statementInput.getDec().type) == Type.BOOLEAN) {
-			mv.visitMethodInsn(INVOKESTATIC, "java/lang/Boolean", "parseBoolean", "(Ljava/lang/String;)Z", false);// is
-																													// this
-																													// correct?
+		} else if (type == Type.BOOLEAN) {
+			mv.visitMethodInsn(INVOKESTATIC, "java/lang/Boolean", "parseBoolean", "(Ljava/lang/String;)Z", false);																													
 			mv.visitVarInsn(ISTORE, statementInput.getDec().slot);
 
-		} else if (Types.getType(statementInput.getDec().type) == Type.FILE) {
+		} else if (type == Type.FILE) {
 			mv.visitVarInsn(ASTORE, statementInput.getDec().slot);
 
-		} else if (Types.getType(statementInput.getDec().type) == Type.IMAGE) {
+		} else if (type == Type.IMAGE) {
 
 			if (statementInput.getDec().height == null && statementInput.getDec().width == null) {
 
 				mv.visitInsn(ACONST_NULL);
 				mv.visitInsn(ACONST_NULL);
-				mv.visitMethodInsn(INVOKESTATIC, RuntimeImageSupport.className, "readImage",
-						RuntimeImageSupport.readImageSig, false);
-				mv.visitVarInsn(ASTORE, statementInput.getDec().slot);
-
+				
 			} else if (statementInput.getDec().height != null && statementInput.getDec().width != null) {
 
 				statementInput.getDec().width.visit(this, arg);
@@ -891,10 +890,11 @@ public class CodeGenerator implements ASTVisitor, Opcodes {
 				statementInput.getDec().height.visit(this, arg);
 				mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
 
-				mv.visitMethodInsn(INVOKESTATIC, RuntimeImageSupport.className, "readImage",
-						RuntimeImageSupport.readImageSig, false);
-				mv.visitVarInsn(ASTORE, statementInput.getDec().slot);
 			}
+			
+			mv.visitMethodInsn(INVOKESTATIC, RuntimeImageSupport.className, "readImage", RuntimeImageSupport.readImageSig, false);		
+			mv.visitVarInsn(ASTORE, statementInput.getDec().slot);
+
 		}
 
 		return null;
@@ -913,46 +913,44 @@ public class CodeGenerator implements ASTVisitor, Opcodes {
 		 */
 		statementShow.e.visit(this, arg);
 		Type type = statementShow.e.getType();
+		
 		switch (type) {
-		case INTEGER: {
-			CodeGenUtils.genLogTOS(GRADE, mv, type);
-			mv.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-			mv.visitInsn(Opcodes.SWAP);
-			mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(I)V", false);
-		}
-			break;
-		case BOOLEAN: {
-			CodeGenUtils.genLogTOS(GRADE, mv, type);
-			mv.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-			mv.visitInsn(Opcodes.SWAP);
-			mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Z)V", false);
-
-		}
-			break;
-		case FLOAT: {
-			CodeGenUtils.genLogTOS(GRADE, mv, type);
-			mv.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-			mv.visitInsn(Opcodes.SWAP);
-			mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(F)V", false);
-		}
-			break;
-		case FILE: {
-			CodeGenUtils.genLogTOS(GRADE, mv, type);
-			mv.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-			mv.visitInsn(Opcodes.SWAP);
-			mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
-		}
-			break;
-		case IMAGE: {
-			CodeGenUtils.genLogTOS(GRADE, mv, type);
-			mv.visitMethodInsn(INVOKESTATIC, RuntimeImageSupport.className, "makeFrame",
-					RuntimeImageSupport.makeFrameSig, false);
-			mv.visitInsn(POP);
-		}
-			break;
-		default: {
-			// TODO throw exception ?
-		}
+			case INTEGER: {
+				CodeGenUtils.genLogTOS(GRADE, mv, type);
+				mv.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+				mv.visitInsn(Opcodes.SWAP);
+				mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(I)V", false);
+			}
+				break;
+			case BOOLEAN: {
+				CodeGenUtils.genLogTOS(GRADE, mv, type);
+				mv.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+				mv.visitInsn(Opcodes.SWAP);
+				mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Z)V", false);
+	
+			}
+				break;
+			case FLOAT: {
+				CodeGenUtils.genLogTOS(GRADE, mv, type);
+				mv.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+				mv.visitInsn(Opcodes.SWAP);
+				mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(F)V", false);
+			}
+				break;
+			case FILE: {
+				CodeGenUtils.genLogTOS(GRADE, mv, type);
+				mv.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+				mv.visitInsn(Opcodes.SWAP);
+				mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
+			}
+				break;
+			case IMAGE: {
+				CodeGenUtils.genLogTOS(GRADE, mv, type);
+				mv.visitMethodInsn(INVOKESTATIC, RuntimeImageSupport.className, "makeFrame",
+						RuntimeImageSupport.makeFrameSig, false);
+				mv.visitInsn(POP);
+			}
+				break;
 
 		}
 		return null;
@@ -978,22 +976,40 @@ public class CodeGenerator implements ASTVisitor, Opcodes {
 	public Object visitStatementWhile(StatementWhile statementWhile, Object arg) throws Exception {
 
 		Label whilestart = new Label();
-		Label whileblock = new Label();
+		Label end = new Label();
 
-		mv.visitJumpInsn(GOTO, whilestart);
-		mv.visitLabel(whileblock);
-		statementWhile.b.visit(this, arg);
 		mv.visitLabel(whilestart);
 		statementWhile.guard.visit(this, arg);
-		mv.visitJumpInsn(IFNE, whileblock);
+		mv.visitJumpInsn(IFEQ, end);
+		statementWhile.b.visit(this, arg);
+		mv.visitJumpInsn(GOTO, whilestart);
+		mv.visitLabel(end);
 
 		return null;
 	}
 
 	@Override
 	public Object visitStatementWrite(StatementWrite statementWrite, Object arg) throws Exception {
-		mv.visitVarInsn(ALOAD, statementWrite.sourceDec.slot);
-		mv.visitVarInsn(ALOAD, statementWrite.destDec.slot);
+		
+		Kind sourceType = statementWrite.getSourceDec().type;
+		Kind destType = statementWrite.getDestDec().type;
+		
+		if (sourceType == Kind.KW_int) {
+			mv.visitVarInsn(ILOAD, statementWrite.sourceDec.slot);
+		} else if (sourceType == Kind.KW_float) {
+			mv.visitVarInsn(FLOAD, statementWrite.sourceDec.slot);
+		} else if (sourceType == Kind.KW_image || sourceType == Kind.KW_filename) {
+			mv.visitVarInsn(ALOAD, statementWrite.sourceDec.slot);
+		}
+		
+		if (destType == Kind.KW_int) {
+			mv.visitVarInsn(ILOAD, statementWrite.sourceDec.slot);
+		} else if (destType == Kind.KW_float) {
+			mv.visitVarInsn(FLOAD, statementWrite.sourceDec.slot);
+		} else if (destType == Kind.KW_image || destType == Kind.KW_filename) {
+			mv.visitVarInsn(ALOAD, statementWrite.sourceDec.slot);
+		}
+
 		mv.visitMethodInsn(INVOKESTATIC, RuntimeImageSupport.className, "write", RuntimeImageSupport.writeSig, false);
 
 		return null;

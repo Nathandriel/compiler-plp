@@ -228,7 +228,6 @@ public class CodeGenTest {
 	public void testBinary1() throws Exception {
 		String input = "prog{show 9 + 4;show 9 - 4;show 9 * 4;show 9 / 4;show 9 ** 4;show 9 % 4;show 9 & 4;show 9 | 4;}";
 		byte[] bytecode = genCode(input);
-		
 	}
 	
 	@Test
@@ -237,7 +236,18 @@ public class CodeGenTest {
 		byte[] bytecode = genCode(input);
 	}
 	
-	
+
+	@Test
+	public void testBinary4() throws Exception {
+		String input =  "prog{show 9.1 + 4;show 9.1 - 4;show 9.1 * 4;show 8.2 / 4;show 9.1 ** 4;}";
+		byte[] bytecode = genCode(input);
+	}
+	 
+	@Test
+	public void writeImageToFile() throws Exception {
+		String input =  "writeImageToFile{image y;\n filename f;\n input y from @ 0 ; input f from @1; \n show y; write y to f;} ";
+		byte[] bytecode = genCode(input);
+	}
 	
 
 }
